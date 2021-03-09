@@ -1,13 +1,12 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: 'Reproducible Research: Peer Assessment 1'
+author: "Raghav Vashisht"
+date: "3/8/2021"
+output:
+  pdf_document: default
+  html_document: default
 ---
-
-
 ## Loading and preprocessing the data
-
 ```{r echo=TRUE}
 library(dplyr)
 library(ggplot2)
@@ -19,8 +18,7 @@ str(AMD)
 AMD$date <- as.Date(AMD$date)
 ```
 
-
-## What is mean total number of steps taken per day?
+##  What is mean total number of steps taken per day?
 
 ```{r echo=TRUE}
 TNOS <- AMD %>% filter(!is.na(steps)) %>% group_by(date) %>% summarise(steps = sum(steps))
@@ -33,9 +31,7 @@ mean(TNOS$steps)
 median(TNOS$steps)
 ```
 
-
 ## What is the average daily activity pattern?
-
 
 ```{r , echo=TRUE}
 ADAP <- AMD %>% filter(!is.na(steps)) %>% group_by(interval) %>% summarise(steps = mean(steps))
@@ -47,7 +43,6 @@ MNOS<-max(ADAP$steps)
 MNOS
 with(ADAP, interval[which.max(steps)])
 ```
-
 
 ## Imputing missing values
 
@@ -120,7 +115,6 @@ median_new
 mean_new - mean_old
 median_new - median_old
 ```
-
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
