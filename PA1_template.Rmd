@@ -8,18 +8,134 @@ output:
 
 ## Loading and preprocessing the data
 
+```{r echo=TRUE}
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+setwd("C:/Users/Toshiba/Desktop/Reproducible Research")
+AMD <- read.csv("activity.csv")
+summary(AMD)
+str(AMD)
+AMD$date <- as.Date(AMD$date)
+```
 
 
 ## What is mean total number of steps taken per day?
 
+```{r echo=TRUE}
+TNOS <- AMD %>% filter(!is.na(steps)) %>% group_by(date) %>% summarise(steps = sum(steps))
+hist(TNOS$steps, breaks = 20,
+     col = "grey",
+     main = "Distribution of total steps a day",
+     xlab = "Total number of steps each day",
+     ylab = "Number of days")
+mean(TNOS$steps)
+median(TNOS$steps)
+```
 
 
 ## What is the average daily activity pattern?
 
 
+```{r , echo=TRUE}
+ADAP <- AMD %>% filter(!is.na(steps)) %>% group_by(interval) %>% summarise(steps = mean(steps))
+with(ADAP, plot(interval, steps, type = "h", lwd = 2, col = interval,
+                main = "Average number of steps per 5 min interval",
+                xlab = "5 minutes interval (1000 = 10am)",
+                ylab = "Average steps"))
+MNOS<-max(ADAP$steps)
+MNOS
+with(ADAP, interval[which.max(steps)])
+```
+
 
 ## Imputing missing values
 
+```{r , echo = TRUE}
+sum(is.na(AMD))
+sum(is.na(AMD)/nrow(AMD))
+sum(is.na(AMD$steps))
+MV <- subset(AMD, is.na(AMD$steps))
+head(MV)
+par(mfrow = c(2,1), mar = c(2, 2, 1, 1))
+hist(MV$interval, main = "Missing values distribution per interval")
+hist(MV$date, main = "Missing values distribution per date", breaks = 61)
+tail(MV)
+AMD$weekday <- weekdays(AMD$date)
+head(AMD)
+AMD_MV <- subset(AMD, is.na(AMD$steps))
+head(AMD_MV)
+str(AMD_MV)
+AMD_No_MV <- subset(AMD, !is.na(AMD$steps))
+head(AMD_No_MV)
+MV_days <- data.frame(date = unique(AMD_MV$date), weekday = weekdays(unique(AMD_MV$date)))
+mein <- AMD_No_MV %>% group_by(interval, weekday) %>% summarise(steps = mean(steps))
+MV1 <- filter(AMD, date == MV_days[1,1])
+mein1 <- filter(mein, weekday == MV_days[1,2])
+MV1$steps <- mein1$steps
+MV2 <- filter(AMD, date == MV_days[2,1])
+mein2 <- filter(mein, weekday == MV_days[2,2])
+MV2$steps <- mein2$steps
+MV3 <- filter(AMD, date == MV_days[3,1])
+mein3 <- filter(mein, weekday == MV_days[3,2])
+MV3$steps <- mein3$steps
+MV4 <- filter(AMD, date == MV_days[4,1])
+mein4 <- filter(mein, weekday == MV_days[4,2])
+MV4$steps <- mein4$steps
+MV5 <- filter(AMD, date == MV_days[5,1])
+mein5 <- filter(mein, weekday == MV_days[5,2])
+MV5$steps <- mein5$steps
+MV6 <- filter(AMD, date == MV_days[6,1])
+mein6 <- filter(mein, weekday == MV_days[6,2])
+MV6$steps <- mein6$steps
+MV7 <- filter(AMD, date == MV_days[7,1])
+mein7 <- filter(mein, weekday == MV_days[7,2])
+MV7$steps <- mein7$steps
+MV8 <- filter(AMD, date == MV_days[8,1])
+mein8 <- filter(mein, weekday == MV_days[8,2])
+MV8$steps <- mein8$steps
+AMD_NEW <- rbind(AMD_No_MV, MV1,MV2,MV3,MV4,MV5,MV6,MV7,MV8)
+AMD_NEW <- arrange(AMD_NEW, date)
+sum(is.na(AMD_NEW$steps))
+TNOS2 <- AMD_NEW %>% group_by(date) %>% summarise(steps = sum(steps))
+par(mfrow = c(1,2))
+hist(TNOS$steps, breaks = 20,
+     color="blue",
+     main = "Total steps a day - NA's ignored",
+     xlab = "Total number of steps each day", 
+     ylab = "Number of days")
+hist(TNOS2$steps, breaks = 20,
+     col = "red",
+     main = "Total steps a day - NA's imputed",
+     xlab = "Total number of steps each day", 
+     ylab = "Number of days")
+mean_old <- mean(TNOS$steps, na.rm = TRUE)
+mean_old
+median_old <- median(TNOS$steps, na.rm = TRUE)
+median_old
+mean_new <- mean(TNOS2$steps, na.rm = TRUE)
+mean_new
+median_new <- median(TNOS2$steps, na.rm = TRUE)
+median_new
+mean_new - mean_old
+median_new - median_old
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r , echo = TRUE}
+AMD_NEW <- AMD_NEW %>% mutate(daytype = ifelse(weekday %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
+AMD_NEW$daytype <- as.factor(AMD_NEW$daytype)
+activity_pattern <- AMD_NEW %>% group_by(interval, daytype) %>% summarise(steps_avg = mean(steps)) 
+g <- ggplot(activity_pattern, aes(x = interval, y = steps_avg, color = daytype)) + 
+  geom_line() +
+  facet_grid(daytype~.) +
+  theme_solarized(light = FALSE) +
+  xlab("5 minutes interval (1000 = 10am)") +
+  ylab("Average steps") +
+  theme(axis.text = element_text(colour = "ghostwhite"),
+        axis.title = element_text(colour = "floralwhite"),
+        legend.position="none")
+print(g)
+```
